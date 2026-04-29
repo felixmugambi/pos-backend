@@ -11,7 +11,25 @@ import userRoutes from './routes/userRoutes.js';
 
 const app = express();
 
-app.use(cors());
+const allowedOrigins = [
+    'http://localhost:3000',
+    'http://localhost:5173',
+    'https://pos-frontend-seven-brown.vercel.app'
+  ];
+  
+  app.use(cors({
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true); // mobile apps / curl
+  
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+  
+      return callback(new Error('Not allowed by CORS'));
+    },
+    credentials: true
+  }));
+  app.options('*', cors());
 app.use(express.json());
 
 app.get( '/api', (req, res) => {
