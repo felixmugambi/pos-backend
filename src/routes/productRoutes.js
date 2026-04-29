@@ -18,6 +18,6 @@ router.delete('/:id', protect, authorize('admin'), deleteProduct);
 
 router.get('/search', protect, searchProducts);
 router.get('/', protect, getProducts);
-router.get("/products/barcode/:barcode", getProductByBarcode);
+router.get("/barcode/:barcode", protect, getProductByBarcode);
 
 export default router;
