@@ -11,15 +11,14 @@ import userRoutes from './routes/userRoutes.js';
 
 const app = express();
 
-const allowedOrigins = [
-    'http://localhost:3000',
-    'http://localhost:5173',
-    'https://pos-frontend-seven-brown.vercel.app'
-  ];
-  
-  // 1. MUST always set headers BEFORE routes
-  app.use((req, res, next) => {
+app.use((req, res, next) => {
     const origin = req.headers.origin;
+  
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'http://localhost:5173',
+      'https://pos-frontend-seven-brown.vercel.app'
+    ];
   
     if (allowedOrigins.includes(origin)) {
       res.setHeader('Access-Control-Allow-Origin', origin);
@@ -32,7 +31,7 @@ const allowedOrigins = [
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   
     if (req.method === 'OPTIONS') {
-      return res.sendStatus(204);
+      return res.status(204).end();
     }
   
     next();
