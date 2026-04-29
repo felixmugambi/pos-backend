@@ -235,3 +235,42 @@ export const deleteProduct = async (req, res) => {
     });
   }
 };
+
+export const getProductByBarcode = async (req, res) => {
+  const { barcode } = req.params;
+
+  try {
+    const { data: product, error } = await supabase
+      .from("products")
+      .select("*")
+      .eq("barcode", barcode)
+      .eq("is_active", true)
+      .single();
+
+    if (error || !product) {
+      return res.status(404).json({
+        success: false,
+        error: "Product not found",
+      });
+    }
+
+    const { data: dbImages } = await supabase
+      .from("product_images")
+      .select("product_id, image_url")
+      .eq("product_id", product.id);
+
+    res.json({
+      success: true,
+      product: {
+        ...product,
+        product_images: dbImages || [],
+      },
+    });
+
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      error: err.message,
+    });
+  }
+};
