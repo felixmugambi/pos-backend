@@ -1,9 +1,9 @@
 import { supabase } from "../config/supabaseClient.js";
 
-const attachImages = (products, images) => {
+const attachImages = (products, dbImages) => {
   return products.map((p) => ({
     ...p,
-    product_images: images.filter((img) => img.product_id === p.id),
+    product_images: dbImages.filter((img) => img.product_id === p.id),
   }));
 };
 
@@ -15,11 +15,11 @@ export const createProduct = async (req, res) => {
     category_id,
     buying_price,
     selling_price,
-    images = [], // 👈 array now
+    images: imageUrls = [], // ✅ SAFE NAME
   } = req.body;
 
   try {
-    // 1. create product first
+    // 1. create product
     const { data: product, error: productError } = await supabase
       .from("products")
       .insert([
@@ -44,9 +44,9 @@ export const createProduct = async (req, res) => {
       throw productError;
     }
 
-    // 2. insert images if any
-    if (images.length > 0) {
-      const imageRows = images.map((url) => ({
+    // 2. insert images
+    if (imageUrls.length > 0) {
+      const imageRows = imageUrls.map((url) => ({
         product_id: product.id,
         image_url: url,
       }));
@@ -58,15 +58,15 @@ export const createProduct = async (req, res) => {
       if (imgError) throw imgError;
     }
 
-    // 3. fetch full product with images
-    const { data: images } = await supabase
+    // 3. fetch images
+    const { data: dbImages } = await supabase
       .from("product_images")
       .select("product_id, image_url")
       .eq("product_id", product.id);
 
     const fullProduct = {
       ...product,
-      product_images: images || [],
+      product_images: dbImages || [],
     };
 
     res.json({
@@ -92,15 +92,13 @@ export const getProducts = async (req, res) => {
 
     if (prodError) throw prodError;
 
-    const { data: images, error: imgError } = await supabase
+    const { data: dbImages, error: imgError } = await supabase
       .from("product_images")
       .select("product_id, image_url");
 
     if (imgError) throw imgError;
 
-    const result = attachImages(products, images);
-
-    console.log("PROD DATA:", JSON.stringify(result, null, 2));
+    const result = attachImages(products, dbImages);
 
     res.json({
       success: true,
@@ -130,16 +128,15 @@ export const searchProducts = async (req, res) => {
     }
 
     const { data: products, error: prodError } = await query;
-
     if (prodError) throw prodError;
 
-    const { data: images, error: imgError } = await supabase
+    const { data: dbImages, error: imgError } = await supabase
       .from("product_images")
       .select("product_id, image_url");
 
     if (imgError) throw imgError;
 
-    const result = attachImages(products, images);
+    const result = attachImages(products, dbImages);
 
     res.json({
       success: true,
@@ -163,11 +160,10 @@ export const updateProduct = async (req, res) => {
     category_id,
     buying_price,
     selling_price,
-    images = [],
+    images: imageUrls = [], // ✅ SAFE NAME
   } = req.body;
 
   try {
-    // 1. update product
     const { data: product, error } = await supabase
       .from("products")
       .update({
@@ -183,11 +179,10 @@ export const updateProduct = async (req, res) => {
 
     if (error) throw error;
 
-    // 2. if new images provided → replace old ones
-    if (images.length > 0) {
+    if (imageUrls.length > 0) {
       await supabase.from("product_images").delete().eq("product_id", id);
 
-      const imageRows = images.map((url) => ({
+      const imageRows = imageUrls.map((url) => ({
         product_id: id,
         image_url: url,
       }));
@@ -195,15 +190,14 @@ export const updateProduct = async (req, res) => {
       await supabase.from("product_images").insert(imageRows);
     }
 
-    // 3. return full product
-    const { data: images } = await supabase
+    const { data: dbImages } = await supabase
       .from("product_images")
       .select("product_id, image_url")
       .eq("product_id", id);
 
     const fullProduct = {
       ...product,
-      product_images: images || [],
+      product_images: dbImages || [],
     };
 
     res.json({
@@ -218,7 +212,7 @@ export const updateProduct = async (req, res) => {
   }
 };
 
-// SOFT DELETE
+// DELETE PRODUCT
 export const deleteProduct = async (req, res) => {
   const { id } = req.params;
 
