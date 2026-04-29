@@ -4,7 +4,8 @@ import {
   getProducts,
   searchProducts,
   updateProduct,
-  deleteProduct
+  deleteProduct,
+  getProductByBarcode
 } from '../controllers/productController.js';
 
 import { protect, authorize } from '../middleware/authMiddleware.js';
