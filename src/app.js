@@ -11,22 +11,40 @@ import userRoutes from './routes/userRoutes.js';
 
 const app = express();
 
-app.use(cors({
-    origin: [
-      'http://localhost:3000',
-      'http://localhost:5173',
-      'https://pos-frontend-seven-brown.vercel.app'
-    ],
-    credentials: true
-  }));
+const allowedOrigins = [
+    'http://localhost:3000',
+    'http://localhost:5173',
+    'https://pos-frontend-seven-brown.vercel.app'
+  ];
   
-  app.options('*', cors());
+  const corsOptions = {
+    origin: function (origin, callback) {
+      // allow mobile apps / server-to-server
+      if (!origin) return callback(null, true);
   
-app.use(express.json());
-
-app.get( '/api', (req, res) => {
-    res.status(200).json({message: "Success"})
-})
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+  
+      // ❗ IMPORTANT: DO NOT throw error in Vercel
+      return callback(null, false);
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+  };
+  
+  // MUST be first
+  app.use(cors(corsOptions));
+  
+  // MUST explicitly handle preflight
+  app.options('*', cors(corsOptions));
+  
+  app.use(express.json());
+  
+  app.get('/api', (req, res) => {
+    res.status(200).json({ message: "Success" });
+  });
 
 app.use('/api/categories', categoryRoutes);
 app.use('/api/products', productRoutes);
