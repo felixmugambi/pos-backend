@@ -279,3 +279,19 @@ export const getProductByBarcode = async (req, res) => {
     });
   }
 };
+
+
+export const restoreProduct = async (req, res) => {
+  const { id } = req.params;
+
+  const { error } = await supabase
+    .from("products")
+    .update({ is_active: true })
+    .eq("id", id);
+
+  if (error) {
+    return res.status(400).json({ error: error.message });
+  }
+
+  res.json({ message: "Product restored" });
+};
