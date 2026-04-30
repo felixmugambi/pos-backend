@@ -86,7 +86,12 @@ export const getProducts = async (req, res) => {
   try {
     const { data: products, error: prodError } = await supabase
       .from("products")
-      .select("*")
+      .select(
+        `
+        *,
+        categories ( name )
+      `
+      )
       .eq("is_active", true)
       .order("created_at", { ascending: false });
 
